@@ -132,29 +132,40 @@ namespace FurrycordInstaller
             // Disable context menu and dev tools
             _webView.CoreWebView2.Settings.AreDefaultContextMenusEnabled = false;
 
-            // Load HTML from embedded resource and inject Icon
-            using (var stream = Assembly.GetExecutingAssembly().GetManifestResourceStream("FurrycordInstaller.index.html"))
-            using (var reader = new StreamReader(stream))
+            // Load HTML from embedded resource or file
+            string html;
+            var htmlResourceStream = Assembly.GetExecutingAssembly().GetManifestResourceStream("FurrycordInstaller.index.html");
+            if (htmlResourceStream != null)
             {
-                var html = reader.ReadToEnd();
-
-                // Convert Icon to Base64 PNG for HTML
-                try {
-                    using (var iconStream = Assembly.GetExecutingAssembly().GetManifestResourceStream("FurrycordInstaller.icon.ico"))
-                    {
-                        var icon = new Icon(iconStream);
-                        using (var bmp = icon.ToBitmap())
-                        using (var ms = new MemoryStream())
-                        {
-                            bmp.Save(ms, System.Drawing.Imaging.ImageFormat.Png);
-                            var base64 = Convert.ToBase64String(ms.ToArray());
-                            html = html.Replace("{{ICON_BASE64}}", "data:image/png;base64," + base64);
-                        }
-                    }
-                } catch { }
-
-                _webView.NavigateToString(html);
+                using (var reader = new StreamReader(htmlResourceStream))
+                {
+                    html = reader.ReadToEnd();
+                }
             }
+            else
+            {
+                // Fallback to file if embedding fails
+                var exeDir = Path.GetDirectoryName(Application.ExecutablePath);
+                var htmlPath = Path.Combine(exeDir, "index.html");
+                html = File.ReadAllText(htmlPath);
+            }
+
+            // Convert Icon to Base64 PNG for HTML
+            try {
+                using (var iconStream = Assembly.GetExecutingAssembly().GetManifestResourceStream("FurrycordInstaller.icon.ico"))
+                {
+                    var icon = new Icon(iconStream);
+                    using (var bmp = icon.ToBitmap())
+                    using (var ms = new MemoryStream())
+                    {
+                        bmp.Save(ms, System.Drawing.Imaging.ImageFormat.Png);
+                        var base64 = Convert.ToBase64String(ms.ToArray());
+                        html = html.Replace("{{ICON_BASE64}}", "data:image/png;base64," + base64);
+                    }
+                }
+            } catch { }
+
+            _webView.NavigateToString(html);
         }
     }
 
