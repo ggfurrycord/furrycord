@@ -1,0 +1,16 @@
+/* Stealth Mode - hide Furrycord plugin UI (but NOT settings access) */
+
+/* Plugin buttons: header bar, channel toolbar, chat bar, user area */
+body.furrycord-stealth .vc-header-bar-btns,
+body.furrycord-stealth .vc-channel-toolbar-btns,
+body.furrycord-stealth .vc-chat-bar-btns,
+body.furrycord-stealth .vc-user-area-btns,
+
+/* Titlebar injected elements */
+body.furrycord-stealth #furrycord-titlebar-btn,
+body.furrycord-stealth #furrycord-titlebar-link-style,
+
+/* FurrycordAI nav button */
+body.furrycord-stealth .nai-nav-item {
+    display: none !important;
+}

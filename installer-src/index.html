@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Furrycord Installer</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Whitney:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bd-blurple: #5865F2;
+      --bd-blurple-hover: #4752c4;
+      --bd-bg: #2b2d31;
+      --bd-bg-elevated: #313338;
+      --bd-bg-input: #1e1f22;
+      --bd-text: #f2f3f5;
+      --bd-muted: #b5bac1;
+      --bd-border: #3f4147;
+      --bd-success: #23a559;
+      --bd-danger: #f23f43;
+      --font: 'Segoe UI', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+      --mono: 'Consolas', 'Courier New', monospace;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body { height: 100%; overflow: hidden; }
+    body {
+      font-family: var(--font);
+      background: var(--bd-bg);
+      color: var(--bd-text);
+      user-select: none;
+    }
+
+    .app {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+
+    /* Titlebar — BD style */
+    .titlebar {
+      height: 32px;
+      background: var(--bd-bg-input);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 12px;
+      -webkit-app-region: drag;
+      flex-shrink: 0;
+    }
+    .titlebar-title { font-size: 12px; color: var(--bd-muted); font-weight: 600; }
+    .titlebar-btns { display: flex; gap: 0; -webkit-app-region: no-drag; }
+    .titlebar-btns button {
+      width: 46px; height: 32px; border: none; background: transparent;
+      color: var(--bd-muted); font-size: 14px; cursor: pointer;
+    }
+    .titlebar-btns button:hover { background: rgba(255,255,255,0.08); color: var(--bd-text); }
+    .titlebar-btns .close:hover { background: var(--bd-danger); color: white; }
+
+    /* Main content */
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 24px 32px 12px;
+      overflow: hidden;
+      min-height: 0;
+    }
+
+    .page { display: none; flex-direction: column; flex: 1; min-height: 0; animation: fadeIn .25s ease; }
+    .page.active { display: flex; }
+
+    @keyframes fadeIn { from { opacity: 0; transform: translateX(12px); } to { opacity: 1; transform: none; } }
+    .page.back { animation-name: fadeInBack; }
+    @keyframes fadeInBack { from { opacity: 0; transform: translateX(-12px); } to { opacity: 1; transform: none; } }
+
+    .page-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 20px;
+      flex-shrink: 0;
+    }
+    .page-header img { width: 48px; height: 48px; border-radius: 12px; }
+    .page-header h1 { font-size: 22px; font-weight: 700; }
+    .page-header p { font-size: 13px; color: var(--bd-muted); margin-top: 2px; }
+
+    /* License */
+    .license-box {
+      flex: 1;
+      background: var(--bd-bg-input);
+      border: 1px solid var(--bd-border);
+      border-radius: 8px;
+      padding: 14px 16px;
+      font-size: 12px;
+      line-height: 1.55;
+      color: var(--bd-muted);
+      overflow-y: auto;
+      margin-bottom: 16px;
+      white-space: pre-wrap;
+    }
+    .license-box::-webkit-scrollbar { width: 8px; }
+    .license-box::-webkit-scrollbar-thumb { background: var(--bd-border); border-radius: 4px; }
+
+    .check-row {
+      display: flex; align-items: flex-start; gap: 10px;
+      font-size: 13px; color: var(--bd-text); cursor: pointer;
+    }
+    .check-row input { margin-top: 3px; width: 16px; height: 16px; accent-color: var(--bd-blurple); cursor: pointer; }
+
+    /* Radio group — BD actions */
+    .radio-group { display: flex; flex-direction: column; gap: 8px; flex: 1; }
+    .radio-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 14px 16px;
+      background: var(--bd-bg-elevated);
+      border: 2px solid transparent;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: border-color .15s, background .15s;
+    }
+    .radio-item:hover { background: #383a40; }
+    .radio-item.selected { border-color: var(--bd-blurple); background: rgba(88,101,242,0.12); }
+    .radio-item input { width: 18px; height: 18px; accent-color: var(--bd-blurple); cursor: pointer; }
+    .radio-item .label { font-size: 15px; font-weight: 600; }
+    .radio-item .desc { font-size: 12px; color: var(--bd-muted); margin-top: 2px; }
+
+    /* Platform checkboxes */
+    .platform-list {
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      min-height: 0;
+    }
+    .platform-list::-webkit-scrollbar { width: 8px; }
+    .platform-list::-webkit-scrollbar-thumb { background: var(--bd-border); border-radius: 4px; }
+
+    .platform-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 14px;
+      background: var(--bd-bg-elevated);
+      border-radius: 8px;
+      border: 1px solid var(--bd-border);
+      cursor: pointer;
+    }
+    .platform-item:hover { border-color: var(--bd-blurple); }
+    .platform-item.checked { border-color: var(--bd-blurple); background: rgba(88,101,242,0.1); }
+    .platform-item input { width: 16px; height: 16px; accent-color: var(--bd-blurple); }
+    .platform-item .info { flex: 1; min-width: 0; }
+    .platform-item .name { font-weight: 600; font-size: 14px; }
+    .platform-item .path { font-size: 11px; color: var(--bd-muted); font-family: var(--mono); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .badge {
+      font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 4px;
+      text-transform: uppercase; letter-spacing: .04em;
+    }
+    .badge-ok { background: rgba(35,165,89,.2); color: var(--bd-success); }
+    .badge-warn { background: rgba(251,191,36,.15); color: #fbbf24; }
+    .badge-ver { background: rgba(88,101,242,.2); color: #a5b4fc; }
+
+    .empty-msg { text-align: center; color: var(--bd-muted); padding: 32px; font-size: 13px; }
+
+    /* Perform / progress */
+    .progress-wrap { margin-bottom: 14px; flex-shrink: 0; }
+    .progress-label { font-size: 13px; font-weight: 600; margin-bottom: 8px; display: flex; justify-content: space-between; }
+    .progress-bar {
+      height: 8px; background: var(--bd-bg-input); border-radius: 4px; overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%; width: 0%; background: var(--bd-blurple);
+      border-radius: 4px; transition: width .3s ease;
+    }
+
+    .log-box {
+      flex: 1;
+      min-height: 0;
+      background: var(--bd-bg-input);
+      border: 1px solid var(--bd-border);
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-family: var(--mono);
+      font-size: 11px;
+      color: var(--bd-muted);
+      overflow-y: auto;
+      line-height: 1.6;
+    }
+    .log-box .ok { color: var(--bd-success); }
+    .log-box .err { color: var(--bd-danger); }
+
+    /* Footer — BD style */
+    .footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 32px 16px;
+      border-top: 1px solid var(--bd-border);
+      flex-shrink: 0;
+    }
+    .footer-links { font-size: 12px; color: var(--bd-muted); }
+    .footer-links a { color: var(--bd-blurple); text-decoration: none; }
+    .footer-links a:hover { text-decoration: underline; }
+    .footer-btns { display: flex; gap: 8px; }
+    .btn {
+      padding: 10px 20px; border-radius: 4px; font-size: 14px; font-weight: 600;
+      border: none; cursor: pointer; font-family: var(--font);
+      transition: background .15s;
+    }
+    .btn:disabled { opacity: .45; cursor: not-allowed; }
+    .btn-secondary { background: var(--bd-bg-elevated); color: var(--bd-text); }
+    .btn-secondary:hover:not(:disabled) { background: #383a40; }
+    .btn-primary { background: var(--bd-blurple); color: white; }
+    .btn-primary:hover:not(:disabled) { background: var(--bd-blurple-hover); }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="titlebar">
+      <span class="titlebar-title">Furrycord Installer</span>
+      <div class="titlebar-btns">
+        <button onclick="window.furrycord.minimizeApp()">&#8212;</button>
+        <button class="close" onclick="window.furrycord.closeApp()">&#10005;</button>
+      </div>
+    </div>
+
+    <div class="main">
+      <!-- 1. License -->
+      <div class="page active" id="page-license">
+        <div class="page-header">
+          <img src="{{ICON_BASE64}}" alt="Furrycord" />
+          <div>
+            <h1>License Agreement</h1>
+            <p>Please read and agree before continuing</p>
+          </div>
+        </div>
+        <div class="license-box" id="license-text">Loading license...</div>
+        <label class="check-row">
+          <input type="checkbox" id="agree" onchange="updateNav()" />
+          <span>I have read and agree to the license terms. I understand that client modifications may violate Discord's Terms of Service and I use Furrycord at my own risk.</span>
+        </label>
+      </div>
+
+      <!-- 2. Actions -->
+      <div class="page" id="page-actions">
+        <div class="page-header">
+          <img src="{{ICON_BASE64}}" alt="" />
+          <div>
+            <h1>Choose an Action</h1>
+            <p>What would you like to do?</p>
+          </div>
+        </div>
+        <div class="radio-group">
+          <label class="radio-item selected" data-action="install">
+            <input type="radio" name="action" value="install" checked onchange="selectAction('install')" />
+            <div>
+              <div class="label">Install Furrycord</div>
+              <div class="desc">Inject Furrycord into Discord. Creates a desktop shortcut with your custom icon.</div>
+            </div>
+          </label>
+          <label class="radio-item" data-action="repair">
+            <input type="radio" name="action" value="repair" onchange="selectAction('repair')" />
+            <div>
+              <div class="label">Repair Furrycord</div>
+              <div class="desc">Fix a broken install after a Discord update. Cleans old mods and re-injects.</div>
+            </div>
+          </label>
+          <label class="radio-item" data-action="uninstall">
+            <input type="radio" name="action" value="uninstall" onchange="selectAction('uninstall')" />
+            <div>
+              <div class="label">Uninstall Furrycord</div>
+              <div class="desc">Remove Furrycord and restore vanilla Discord. Your settings are kept.</div>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <!-- 3. Setup / platforms -->
+      <div class="page" id="page-setup">
+        <div class="page-header">
+          <img src="{{ICON_BASE64}}" alt="" />
+          <div>
+            <h1 id="setup-title">Select Discord</h1>
+            <p>Choose which installations to target (Stable, PTB, Canary, Dev)</p>
+          </div>
+        </div>
+        <div class="platform-list" id="platform-list">
+          <div class="empty-msg">Detecting Discord installations...</div>
+        </div>
+      </div>
+
+      <!-- 4. Perform -->
+      <div class="page" id="page-perform">
+        <div class="page-header">
+          <img src="{{ICON_BASE64}}" alt="" />
+          <div>
+            <h1 id="perform-title">Installing...</h1>
+            <p id="perform-sub">Please wait while Furrycord completes the operation</p>
+          </div>
+        </div>
+        <div class="progress-wrap">
+          <div class="progress-label">
+            <span id="progress-text">Starting...</span>
+            <span id="progress-pct">0%</span>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+        </div>
+        <div class="log-box" id="log-box"></div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <div class="footer-links">
+        <a href="#" onclick="window.furrycord.openUrl('https://github.com/furrycord/furrycord');return false">GitHub</a>
+      </div>
+      <div class="footer-btns">
+        <button class="btn btn-secondary" id="btn-back" onclick="goBack()" style="visibility:hidden">Back</button>
+        <button class="btn btn-primary" id="btn-next" onclick="goNext()" disabled>Next</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const PAGES = ['page-license', 'page-actions', 'page-setup', 'page-perform'];
+    let step = 0;
+    let direction = 1;
+    let currentAction = 'install';
+    let discords = [];
+    let selectedPaths = new Set();
+
+    const LICENSE = `Furrycord Installer — GPL-3.0-or-later
+
+Furrycord is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+
+Furrycord is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+DISCLAIMER: Furrycord modifies the Discord desktop client. This may violate Discord's Terms of Service. Use at your own risk. Only download Furrycord from official sources.`;
+
+    document.getElementById('license-text').textContent = LICENSE;
+
+    function selectAction(action) {
+      currentAction = action;
+      document.querySelectorAll('.radio-item').forEach(el => {
+        el.classList.toggle('selected', el.dataset.action === action);
+      });
+      const titles = { install: 'Install Furrycord', repair: 'Repair Furrycord', uninstall: 'Uninstall Furrycord' };
+      document.getElementById('setup-title').textContent = titles[action] || 'Select Discord';
+      updateNav();
+    }
+
+    function showStep(n, dir = 1) {
+      direction = dir;
+      step = n;
+      PAGES.forEach((id, i) => {
+        const el = document.getElementById(id);
+        el.classList.remove('active', 'back');
+        if (i === n) {
+          el.classList.add('active', dir < 0 ? 'back' : '');
+        }
+      });
+      document.getElementById('btn-back').style.visibility = n > 0 && n < 3 ? 'visible' : 'hidden';
+      if (n === 2) loadPlatforms();
+      if (n === 3) runPerform();
+      updateNav();
+    }
+
+    function updateNav() {
+      const btn = document.getElementById('btn-next');
+      if (step === 0) {
+        btn.textContent = 'Next';
+        btn.disabled = !document.getElementById('agree').checked;
+      } else if (step === 1) {
+        btn.textContent = 'Next';
+        btn.disabled = false;
+      } else if (step === 2) {
+        const labels = { install: 'Install', repair: 'Repair', uninstall: 'Uninstall' };
+        btn.textContent = labels[currentAction] || 'Next';
+        btn.disabled = selectedPaths.size === 0;
+      } else {
+        btn.textContent = 'Close';
+        btn.disabled = false;
+      }
+    }
+
+    function goBack() {
+      if (step > 0 && step < 3) showStep(step - 1, -1);
+    }
+
+    async function goNext() {
+      if (step === 3) {
+        window.furrycord.closeApp();
+        return;
+      }
+      if (step < 3) showStep(step + 1, 1);
+    }
+
+    function appendLog(msg, type = '') {
+      const box = document.getElementById('log-box');
+      const line = document.createElement('div');
+      if (type) line.className = type;
+      line.textContent = '> ' + msg;
+      box.appendChild(line);
+      box.scrollTop = box.scrollHeight;
+    }
+
+    function setProgress(pct, text) {
+      document.getElementById('progress-fill').style.width = Math.min(100, pct) + '%';
+      document.getElementById('progress-pct').textContent = Math.round(pct) + '%';
+      if (text) document.getElementById('progress-text').textContent = text;
+    }
+
+    async function loadPlatforms() {
+      const list = document.getElementById('platform-list');
+      list.innerHTML = '<div class="empty-msg">Detecting Discord installations...</div>';
+      selectedPaths.clear();
+
+      try {
+        discords = await window.furrycord.detectDiscord() || [];
+      } catch {
+        discords = [];
+      }
+
+      list.innerHTML = '';
+      if (!discords.length) {
+        list.innerHTML = '<div class="empty-msg">No Discord installations found.<br><br>Install Discord from discord.com first, then run this installer again.</div>';
+        updateNav();
+        return;
+      }
+
+      for (let i = 0; i < discords.length; i++) {
+        const d = discords[i];
+        let injected = false;
+        let thirdParty = false;
+        try { injected = await window.furrycord.isInjected(d.path); } catch {}
+        if (!injected) try { thirdParty = await window.furrycord.hasThirdPartyMod(d.path); } catch {}
+
+        const el = document.createElement('label');
+        el.className = 'platform-item' + (injected ? ' checked' : '');
+        el.innerHTML = `
+          <input type="checkbox" data-path="${d.path.replace(/"/g, '&quot;')}" ${injected || i === 0 ? 'checked' : ''} onchange="togglePlatform(this)" />
+          <div class="info">
+            <div class="name">${d.name}</div>
+            <div class="path">${d.path}</div>
+          </div>
+          <span class="badge badge-ver">v${d.version}</span>
+          ${injected ? '<span class="badge badge-ok">injected</span>' : thirdParty ? '<span class="badge badge-warn">other mod</span>' : ''}
+        `;
+        list.appendChild(el);
+
+        const cb = el.querySelector('input');
+        if (cb.checked) selectedPaths.add(d.path);
+      }
+      updateNav();
+    }
+
+    function togglePlatform(cb) {
+      const path = cb.dataset.path;
+      cb.closest('.platform-item').classList.toggle('checked', cb.checked);
+      if (cb.checked) selectedPaths.add(path);
+      else selectedPaths.delete(path);
+      updateNav();
+    }
+
+    async function runPerform() {
+      const titles = { install: 'Installing Furrycord', repair: 'Repairing Furrycord', uninstall: 'Uninstalling Furrycord' };
+      document.getElementById('perform-title').textContent = titles[currentAction];
+      document.getElementById('log-box').innerHTML = '';
+      setProgress(0, 'Starting...');
+      appendLog('Furrycord installer started');
+
+      const paths = [...selectedPaths];
+      const methods = { install: 'startInject', repair: 'startRepair', uninstall: 'startUninject' };
+      const method = methods[currentAction];
+
+      for (let i = 0; i < paths.length; i++) {
+        const p = paths[i];
+        const d = discords.find(x => x.path === p);
+        appendLog(`${currentAction} → ${d?.name || p}`);
+
+        const started = window.furrycord[method](p);
+        if (!started?.started) {
+          appendLog(started?.error || 'Failed to start', 'err');
+          setProgress(0, 'Failed');
+          return;
+        }
+
+        await new Promise(resolve => {
+          const iv = setInterval(() => {
+            const st = window.furrycord.getInjectStatus();
+            if (st.state === 'done') { clearInterval(iv); resolve({ ok: true }); }
+            else if (st.state === 'error') { clearInterval(iv); resolve({ ok: false, err: st.error }); }
+          }, 400);
+        }).then(r => {
+          if (r.ok) {
+            appendLog(`✓ Done: ${d?.name || 'installation'}`, 'ok');
+            setProgress(((i + 1) / paths.length) * 100, 'Complete');
+          } else {
+            appendLog('✗ ' + (r.err || 'Unknown error'), 'err');
+            setProgress(0, 'Failed');
+          }
+        });
+      }
+
+      appendLog('All operations finished.', 'ok');
+      setProgress(100, 'Done!');
+      document.getElementById('perform-sub').textContent = 'You can close this window and open Discord.';
+    }
+
+    showStep(0);
+  </script>
+</body>
+</html>
