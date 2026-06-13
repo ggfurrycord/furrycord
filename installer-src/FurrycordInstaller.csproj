@@ -31,7 +31,9 @@
 
   <ItemGroup>
     <EmbeddedResource Include="icon.ico" />
-    <EmbeddedResource Include="index.html" />
+    <EmbeddedResource Include="index.html">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </EmbeddedResource>
   </ItemGroup>
 
 </Project>
