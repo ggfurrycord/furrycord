@@ -167,7 +167,7 @@ namespace FurrycordInstaller
         private string _distDir;
         private string _exeDir;
 
-        const string GITHUB_REPO = "furrycordoff/furrycord";
+        const string GITHUB_REPO = "ggfurrycord/furrycord";
         const string DIST_ZIP = "furrycord-dist.zip";
 
         public FurrycordBackend(LauncherForm form, WebView2 webView)
