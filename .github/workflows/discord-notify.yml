@@ -1,0 +1,70 @@
+name: Discord Notification
+
+on:
+  push:
+    branches: [ main ]
+  release:
+    types: [ published ]
+  workflow_dispatch:
+
+jobs:
+  discord-notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Discord Notification
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const webhook = context.payload.repository.owner.login === 'ggfurrycord' 
+              ? '${{ secrets.DISCORD_WEBHOOK }}' 
+              : null;
+            
+            if (!webhook) {
+              console.log('No webhook configured');
+              return;
+            }
+
+            const event = context.eventName;
+            let message = '';
+            let color = 0x5865F2; // Discord blurple
+
+            if (event === 'push') {
+              const commit = context.payload.head_commit;
+              const branch = context.ref.replace('refs/heads/', '');
+              message = `🚀 **New Push to ${branch}**\n` +
+                       `**Commit:** ${commit.message.substring(0, 100)}\n` +
+                       `**Author:** ${commit.author.name}\n` +
+                       `**View:** ${commit.url}`;
+              color = 0x57F287; // Green
+            } else if (event === 'release') {
+              const release = context.payload.release;
+              message = `🎉 **New Release: ${release.name || release.tag_name}**\n` +
+                       `**Version:** ${release.tag_name}\n` +
+                       `**Notes:** ${release.body?.substring(0, 200) || 'No release notes'}\n` +
+                       `**Download:** ${release.html_url}`;
+              color = 0xFEE75C; // Yellow
+            }
+
+            const payload = {
+              embeds: [{
+                title: 'Furrycord Repository Update',
+                description: message,
+                color: color,
+                timestamp: new Date().toISOString(),
+                footer: {
+                  text: 'GitHub Actions',
+                  icon_url: 'https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png'
+                },
+                author: {
+                  name: context.repository.owner.login,
+                  url: context.repository.html_url,
+                  icon_url: context.repository.owner.avatar_url
+                }
+              }]
+            };
+
+            await fetch(webhook, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload)
+            });
